@@ -18,35 +18,24 @@ public class DisplayMessageController {
 
     @GetMapping("/welcome")
     public ResponseEntity<String> getWelcomeMessage(@RequestParam("lang") String languageTag) {
-        // Executor service for multithreading
         ExecutorService executorService = Executors.newFixedThreadPool(2);
 
-        // Create tasks for English and French welcome messages
-        DisplayMessage englishMessageRunnable = new DisplayMessage(Locale.US);
-        DisplayMessage frenchMessageRunnable = new DisplayMessage(Locale.CANADA_FRENCH);
+        Locale locale = Locale.forLanguageTag(languageTag);
+        DisplayMessage displayMessageRunnable = new DisplayMessage(locale);
 
-        // Submit tasks to the executor service
-        Future<String> englishFuture = executorService.submit(englishMessageRunnable::fetchWelcomeMessage);
-        Future<String> frenchFuture = executorService.submit(frenchMessageRunnable::fetchWelcomeMessage);
+        Future<String> messageFuture = executorService.submit(displayMessageRunnable::fetchWelcomeMessage);
 
-        String englishMessage;
-        String frenchMessage;
-
+        String message;
         try {
-            // Retrieve the messages once the tasks are done
-            englishMessage = englishFuture.get();
-            frenchMessage = frenchFuture.get();
+            message = messageFuture.get();
         } catch (Exception e) {
             e.printStackTrace();
             return new ResponseEntity<>("Error in processing the request", HttpStatus.INTERNAL_SERVER_ERROR);
         } finally {
             executorService.shutdown();
         }
-        // Combine the results of both threads
-        String responseMessage = englishMessage + " " + frenchMessage;
 
-        return new ResponseEntity<>(responseMessage, HttpStatus.OK);
-
+        return new ResponseEntity<>(message, HttpStatus.OK);
     }
 }
 
